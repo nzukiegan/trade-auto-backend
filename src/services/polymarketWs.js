@@ -69,7 +69,7 @@ export class PolymarketLiveFeed {
 
   handleMessage(data) {
     if (!data) return;
-    this.wsService.sendMarketData(data);
+    this.wsService.sendMarketData(data, "pdata");
   }
 
   async updateDatabase(data) {
@@ -132,7 +132,7 @@ export class PolymarketLiveFeed {
           }
 
           default:
-              console.log(`Unhandled event type: ${data.event_type}`);
+            //do nothing
         }
     } catch (err) {
         console.error('❌ Error updating database:', err);

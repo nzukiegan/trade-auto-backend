@@ -10,6 +10,7 @@ import authRoutes from './src/routes/auth.js';
 import ruleRoutes from './src/routes/rules.js';
 import tradingRoutes from './src/routes/trading.js';
 import marketRoutes from './src/routes/markets.js';
+import { RuleEngine } from './src/services/ruleEngine.js';
 import userRoutes from './src/routes/users.js';
 import { WebSocketService } from './src/services/websocketService.js';
 import { PolymarketLiveFeed } from './src/services/polymarketWs.js';
@@ -24,7 +25,9 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 const wsService = new WebSocketService(wss);
 new PolymarketLiveFeed(wsService);
-new KalshiLiveFeed(wsService);
+//new KalshiLiveFeed(wsService);
+const ruleEngine = new RuleEngine(wsService)
+ruleEngine.start()
 
 app.use(helmet());
 app.use(cors());
@@ -77,4 +80,4 @@ server.listen(PORT, () => {
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-export { app, wsService};
+export { app, wsService, ruleEngine };

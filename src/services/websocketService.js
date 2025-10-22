@@ -110,17 +110,17 @@ export class WebSocketService {
     if (this.eventCallbacks && this.eventCallbacks.has(event)) {
       this.eventCallbacks.get(event).forEach(callback => {
         callback(data);
+        console.log("callback called")
       });
     }
   }
 
-  sendMarketData(marketData) {
+  sendMarketData(marketData, type) {
     this.broadcastToAll({
-      type: 'market_data',
+      type: type,
       data: marketData,
       timestamp: new Date()
     });
-
     this.emit('marketData', marketData);
   }
 }

@@ -28,7 +28,6 @@ const TradeSchema = new mongoose.Schema({
   side: {
     type: String,
     required: true,
-    enum: ['yes', 'no']
   },
   amount: {
     type: Number,

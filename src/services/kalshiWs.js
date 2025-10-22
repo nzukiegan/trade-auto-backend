@@ -82,7 +82,7 @@ export class KalshiLiveFeed {
 
   handleMessage(data) {
     if (!data) return;
-    this.wsService.sendMarketData(data);
+    this.wsService.sendMarketData(data, "ticker");
   }
 
   async updateDatabase(data) {

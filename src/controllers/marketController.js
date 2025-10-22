@@ -2,10 +2,7 @@ import { platform } from 'os';
 import Market from '../models/Market.js';
 import { KalshiService } from '../services/kalshiService.js';
 import { PolymarketService } from '../services/polymarketService.js';
-import { RuleEngine } from '../services/ruleEngine.js';
-
-const ruleEngine = new RuleEngine(wsService);
-ruleEngine.start();
+import { ruleEngine } from '../../server.js';
 
 export const getMarkets = async (req, res) => {
     console.log("Get markets called");
@@ -115,21 +112,28 @@ export const refreshMarkets = async (req, res) => {
         updatedMarkets.push(marketDoc);
       }
     };
-
-    if (platformQuery === 'kalshi' || platformQuery === 'all') {
-      const kalshiService = new KalshiService();
-      const kalshiMarkets = await kalshiService.getMarkets();
-      await processMarkets('kalshi', kalshiMarkets);
+    try{
+        if (platformQuery === 'kalshi' || platformQuery === 'all') {
+          const kalshiService = new KalshiService();
+          const kalshiMarkets = await kalshiService.getMarkets();
+          await processMarkets('kalshi', kalshiMarkets);
+        }
+    }catch(error){
+      console.error('❌ Error refreshing kalsi markets:', error);
     }
 
-    if (platformQuery === 'polymarket' || platformQuery === 'all') {
-      const polymarketService = new PolymarketService();
-      const sports = await polymarketService.getSports();
-      const marketsBySport = await Promise.all(
-        sports.map((sport) => polymarketService.getMarkets(sport.tagId))
-      );
-      const polymarketMarkets = marketsBySport.flat();
-      await processMarkets('polymarket', polymarketMarkets);
+    try{
+      if (platformQuery === 'polymarket' || platformQuery === 'all') {
+        const polymarketService = new PolymarketService();
+        const sports = await polymarketService.getSports();
+        const marketsBySport = await Promise.all(
+          sports.map((sport) => polymarketService.getMarkets(sport.tagId))
+        );
+        const polymarketMarkets = marketsBySport.flat();
+        await processMarkets('polymarket', polymarketMarkets);
+      }
+    }catch(error){
+      console.error('❌ Error refreshing polymarkets', error);
     }
 
     if (res) {

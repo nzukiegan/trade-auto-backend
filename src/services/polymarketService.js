@@ -1,24 +1,35 @@
 import axios from 'axios';
 import { ClobClient, Side, OrderType } from "@polymarket/clob-client";
 import { Wallet } from "ethers";
+import dotenv from 'dotenv';
+dotenv.config();
 
 const host = process.env.POLYMARKET_CLOB_HOST
 const METAKEY = process.env.METAKEY
 const chainId = 137;
-
 const signer = new Wallet(METAKEY);
 
 const clobClient = new ClobClient(host, chainId, signer);
+const creds = await clobClient.createOrDeriveApiKey()
+const signatureType = 0; 
+const authenticatedClient = new ClobClient(
+  host, 
+  chainId, 
+  signer, 
+  creds, 
+  signatureType
+);
 
 export class PolymarketService {
   constructor(apiKey = '') {
-    this.apiKey = apiKey;
+    this.apiKey = process.env.POLY_API_KEY
+    console.log("api key", this.apiKey)
     this.baseURL = process.env.POLYMARKET_API_URL;
     
     this.client = axios.create({
       baseURL: this.baseURL,
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json'
       }
     });
@@ -93,16 +104,18 @@ export class PolymarketService {
     }
   }
 
-  async placeOrder(tokenId, price, size, actionType) {
+  async placeOrder(token_Id, price, size, actionType) {
     try {
-      const order = await clobClient.createOrder({
-        tokenID: tokenId,
+      const order = await authenticatedClient.createOrder({
+        tokenID: token_Id,
         price: price,
         side: (actionType == 'buy')? Side.BUY : Side.SELL,
         size: size,
       });
 
-      const resp = await clobClient.postOrder(order, OrderType.GTC);
+      console.log("order placed", order)
+
+      const resp = await authenticatedClient.postOrder(order, OrderType.GTC);
       console.log(resp);
       
       return {

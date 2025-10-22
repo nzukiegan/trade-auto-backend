@@ -6,6 +6,8 @@ import Market from '../models/Market.js';
 import { KalshiService } from './kalshiService.js';
 import { PolymarketService } from './polymarketService.js';
 import cron from 'node-cron';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export class RuleEngine {
   constructor(websocketService) {
@@ -70,7 +72,7 @@ export class RuleEngine {
           return;
         }
       }
-
+      console.log("market found for this rule")
       const currentValue = await this.getMarketValue(marketData, rule);
       if (currentValue == null) {
         return;
@@ -79,7 +81,7 @@ export class RuleEngine {
       const targetValue = Number(rule.condition.value);
 
       const shouldTrigger = this.evaluateCondition(currentValue, rule.condition.operator, targetValue);
-
+      console.log("SHould rule trigger ? ", shouldTrigger)
       if (shouldTrigger) {
         await this.executeRuleAction(rule, marketData, currentValue);
       }
@@ -214,17 +216,17 @@ export class RuleEngine {
 
       let tradingService;
       if (ruleDoc.platform === 'kalshi') {
-        if (!user.kalshiApiKey || !user.kalshiSecret) {
+        if (process.env.KALSHI_API_KEY_ID) {
           console.error(`User ${user._id} missing Kalshi credentials`);
           return;
         }
-        tradingService = new KalshiService(user.kalshiApiKey, user.kalshiSecret);
+        tradingService = new KalshiService('', '');
       } else {
-        if (!user.polymarketApiKey) {
+        if (!process.env.POLY_API_KEY) {
           console.error(`User ${user._id} missing Polymarket API key`);
           return;
         }
-        tradingService = new PolymarketService(user.polymarketApiKey);
+        tradingService = new PolymarketService('');
       }
 
       const action = ruleDoc.action || {};
@@ -260,10 +262,11 @@ export class RuleEngine {
 
       orderPrice = Number(orderPrice) || 0;
       let orderResult;
+      console.log("Executing on platform ", marketData.platform)
       if(marketData.platform === 'kalshi'){
         orderResult = await tradingService.placeOrder(
           action.type,
-          action.side,
+          action.side.toLowerCase(),
           "limit",
           marketData.marketId,
           orderPrice,
@@ -273,10 +276,12 @@ export class RuleEngine {
         orderResult = await tradingService.placeOrder(
           tokenId,
           orderPrice,
-          action.amount / action.price,
+          action.amount / orderPrice,
           action.type
         );
       }
+
+      console.log("order result ", orderResult)
 
       const trade = new Trade({
         userId: user._id,
@@ -323,7 +328,7 @@ export class RuleEngine {
           platform: rule.platform,
           marketId: rule.marketId,
           type: rule.action?.type,
-          side: rule.action?.side,
+          side: rule.action?.side.toLowerCase(),
           amount: rule.action?.amount,
           price: 0,
           totalCost: 0,
