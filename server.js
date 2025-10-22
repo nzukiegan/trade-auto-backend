@@ -77,4 +77,4 @@ server.listen(PORT, () => {
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-export { app, wsService, ruleEngine };
+export { app, wsService};
