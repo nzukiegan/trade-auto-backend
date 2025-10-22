@@ -189,6 +189,7 @@ export class RuleEngine {
   }
 
   async executeRuleAction(rule, marketData, triggeredValue = null) {
+    let op
     try {
       let ruleDoc = rule;
       if (!ruleDoc.save) {
@@ -262,7 +263,8 @@ export class RuleEngine {
 
       orderPrice = Number(orderPrice) || 0;
       let orderResult;
-      console.log("Executing on platform ", marketData.platform)
+      op = orderPrice;
+
       if(marketData.platform === 'kalshi'){
         orderResult = await tradingService.placeOrder(
           action.type,
@@ -280,9 +282,7 @@ export class RuleEngine {
           action.type
         );
       }
-
-      console.log("order result ", orderResult)
-
+      
       const trade = new Trade({
         userId: user._id,
         ruleId: ruleDoc._id,
@@ -330,7 +330,7 @@ export class RuleEngine {
           type: rule.action?.type,
           side: rule.action?.side.toLowerCase(),
           amount: rule.action?.amount,
-          price: 0,
+          price: op,
           totalCost: 0,
           status: 'failed',
           errorMessage: error.message
