@@ -30,7 +30,12 @@ const ruleEngine = new RuleEngine(wsService)
 ruleEngine.start()
 
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: [
+    process.env.FRONTEND_URL
+  ],
+  credentials: true
+}));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
