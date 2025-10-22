@@ -43,7 +43,7 @@ export class PolymarketLiveFeed {
             this.handleMessage(data);
             this.updateDatabase(data);
             } catch (err) {
-            console.error('Polymarket WS message error:', err.message);
+            //console.error('Polymarket WS message error:', err.message);
             }
         });
 
