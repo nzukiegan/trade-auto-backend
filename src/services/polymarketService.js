@@ -49,6 +49,32 @@ export class PolymarketService {
     }
   }
 
+  async getPortfolio() {
+      try {
+      const response = await this.client.get('/portfolio');
+      const portfolio = response.data;
+
+      const positions = (portfolio.positions || portfolio.tokens || []).map(pos => ({
+        tokenId: pos.token_id || pos.tokenId || pos.id,
+        marketId: pos.market_id || pos.marketId,
+        outcome: pos.outcome_name || pos.outcome,
+        size: Number(pos.size || pos.amount || 0),
+        avgPrice: Number(pos.avg_price || pos.averagePrice || 0),
+        value: Number(pos.value || pos.valuation || 0)
+      }));
+
+      return {
+        balance: Number(portfolio.balance || portfolio.wallet_balance || 0),
+        totalValue: Number(portfolio.total_value || 0),
+        positions,
+        timestamp: new Date()
+      };
+    } catch (error) {
+      console.error('Polymarket getPortfolio error:', error.response?.data || error.message);
+      throw new Error(`Failed to fetch Polymarket portfolio: ${error.response?.data?.error || error.message}`);
+    }
+  }
+
   async getMarkets(tagId, limit = 10, offset = 0) {
     try {
       const today = new Date().toISOString().split('T')[0];   
@@ -172,4 +198,16 @@ export class PolymarketService {
       return { balance: 0, positions: [] };
     }
   }
+
+    async getWalletBalance() {
+      try {
+        const balances = await authenticatedClient.getBalances();
+        console.log("Wallet balances:", balances);
+        
+        return balances;
+      } catch (error) {
+        console.error('Polymarket get wallet balance error:', error.response?.data || error.message);
+        throw new Error(`Failed to fetch wallet balance: ${error.response?.data?.error || error.message}`);
+      }
+    }
 }

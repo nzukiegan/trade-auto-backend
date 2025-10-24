@@ -23,17 +23,11 @@ const UserSchema = new mongoose.Schema({
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters']
   },
-  kalshiApiKey: {
-    type: String,
-    default: '',
-    select: false
+  kalshi: {
+    apiKey: { type: String, default: '', select: false },
+    privateKeyPath: { type: String, default: '', select: false }
   },
-  kalshiSecret: {
-    type: String,
-    default: '',
-    select: false
-  },
-  polymarketApiKey: {
+  polymarketWalletKey: {
     type: String,
     default: '',
     select: false

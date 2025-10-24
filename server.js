@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import authRoutes from './src/routes/auth.js';
 import ruleRoutes from './src/routes/rules.js';
+import accountRoutes from './src/routes/accounts.js';
 import tradingRoutes from './src/routes/trading.js';
 import marketRoutes from './src/routes/markets.js';
 import { RuleEngine } from './src/services/ruleEngine.js';
@@ -30,12 +31,7 @@ const ruleEngine = new RuleEngine(wsService)
 ruleEngine.start()
 
 app.use(helmet());
-app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL
-  ],
-  credentials: true
-}));
+app.use(cors());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -51,6 +47,7 @@ app.use('/api/rules', ruleRoutes);
 app.use('/api/trading', tradingRoutes);
 app.use('/api/markets', marketRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/account', accountRoutes);
 
 refreshMarkets()
 

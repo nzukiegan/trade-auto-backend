@@ -8,9 +8,9 @@ export class KalshiService {
     this.secret = secret;
     this.baseURL = process.env.KALSHI_API_URL || 'https://api.elections.kalshi.com/trade-api/v2';
     this.path = '/portfolio/orders'
-    this.private_pem = fs.readFileSync(process.env.KALSHI_PRIVATE_KEY_PATH, 'utf8');
-    this.privateKey = crypto.createPrivateKey({ key: this.private_pem, format: 'pem' });
-
+    //this.private_pem = fs.readFileSync(process.env.KALSHI_PRIVATE_KEY_PATH, 'utf8');
+    //this.privateKey = crypto.createPrivateKey({ key: this.private_pem, format: 'pem' });
+    this.privateKey = null;
     this.client = axios.create({
       baseURL: this.baseURL,
       headers: {
@@ -114,6 +114,32 @@ export class KalshiService {
     }
   }
 
+  async getPortfolio() {
+    try {
+      const response = await this.client.get('/portfolio');
+      const portfolio = response.data.portfolio || response.data;
+
+      const positions = (portfolio.positions || []).map(p => ({
+        ticker: p.ticker,
+        yesContracts: Number(p.yes_contracts || 0),
+        noContracts: Number(p.no_contracts || 0),
+        avgPrice: Number(p.avg_price || 0),
+        value: Number(p.value || 0),
+        pnl: Number(p.realized_pnl || 0)
+      }));
+
+      return {
+        cashBalance: Number(portfolio.cash_balance || 0),
+        totalValue: Number(portfolio.total_value || 0),
+        positions,
+        timestamp: new Date()
+      };
+    } catch (error) {
+      console.error('Kalshi getPortfolio error:', error.response?.data || error.message);
+      throw new Error(`Failed to fetch Kalshi portfolio: ${error.response?.data?.error || error.message}`);
+    }
+  }
+
   async placeOrder({action, side, type, ticker, yes_price, count }) {
     const timestamp = Date.now().toString();
     const method = 'POST';
@@ -121,7 +147,7 @@ export class KalshiService {
     
     const message   = timestamp + method + path;
     const signature = crypto.sign('sha256', Buffer.from(message), {
-      key: privateKey,
+      key: this.privateKey,
       padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
       saltLength: crypto.constants.RSA_PSS_SALTLEN_DIGEST
     }).toString('base64');
@@ -162,6 +188,24 @@ export class KalshiService {
       throw new Error(`Failed to cancel order: ${error.response?.data?.error || error.message}`);
     }
   }
+
+  async getWalletBalance() {
+    try {
+      const response = await this.client.get('/portfolio/balance');
+      const balanceData = response.data;
+
+      return {
+        cashBalance: balanceData.cash_balance || 0,
+        positionsValue: balanceData.positions_value || 0,
+        totalValue: balanceData.total_value || 0,
+        timestamp: new Date()
+      };
+    } catch (error) {
+      console.error('Kalshi get wallet balance error:', error.response?.data || error.message);
+      throw new Error(`Failed to fetch wallet balance: ${error.response?.data?.error || error.message}`);
+    }
+  }
+
 
   async getPortfolio() {
     try {

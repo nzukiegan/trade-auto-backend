@@ -8,16 +8,24 @@ router.use(authenticate);
 
 router.put('/api-keys', async (req, res) => {
   try {
-    const { kalshiApiKey, kalshiSecret, polymarketApiKey } = req.body;
+    const { kalshi, polymarket } = req.body;
+    console.log('Incoming body:', req.body);
 
     const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (kalshiApiKey !== undefined) user.kalshiApiKey = kalshiApiKey;
-    if (kalshiSecret !== undefined) user.kalshiSecret = kalshiSecret;
-    if (polymarketApiKey !== undefined) user.polymarketApiKey = polymarketApiKey;
+    if (kalshi) {
+      user.kalshi = {
+        apiKey: kalshi.apiKey || '',
+        privateKeyPath: kalshi.privateKeyPath || ''
+      };
+    }
+
+    if (polymarket && polymarket.walletKey) {
+      user.polymarketWalletKey = polymarket.walletKey;
+    }
 
     await user.save();
 
